@@ -39,7 +39,7 @@ if (doc_config is None):
     doc_config = {}
     doc_config['_id'] = 'boards_updated'
     doc_config['at'] = int(time.time()) - 3600 * 24
-    config.tb_config.replace_one(doc_config)
+    config.tb_config.save(doc_config)
 
 time_elapsed = now - doc_config['at']
 if (time_elapsed < config.cfg['newsm']['boards_interval']):
@@ -48,8 +48,7 @@ else:
     print('    Proceed boards updating. Last update elapsed:{}'.format(time_elapsed))
     newsm_board.fetch_and_update_boards()
     doc_config['at'] = now
-    config.tb_config.replace_one(doc_config)
-
+    config.tb_config.save(doc_config)
 
 print('[*] Update articles')
 results = config.tb_board.find({}, no_cursor_timeout = True)

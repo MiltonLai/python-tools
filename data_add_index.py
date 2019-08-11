@@ -23,14 +23,22 @@ for board in selected_boards:
     count += 1
     board_col = config.mongo_db[board]
     indexes = board_col.list_indexes()
+    flag_author = True
+    flag_created_at = True
     for index in indexes:
         #print(index)
         #print(index['name'])
         if (index['name'] == 'author_text_created_at_-1'):
             board_col.drop_index('author_text_created_at_-1')
-    #board_col.create_index([('author', pymongo.TEXT),('created_at', pymongo.DESCENDING)])
-    board_col.create_index([('author', pymongo.TEXT)])
-    board_col.create_index([('created_at', pymongo.DESCENDING)])
-    print('Completed:{} {}'.format(count, board))
+        if (index['name'] == 'author_text'):
+            flag_author = False
+        if (index['name'] == 'created_at_-1'):
+            flag_created_at = False
+    if (flag_author):
+        print('Add author index:{}'.format(board))
+        board_col.create_index([('author', pymongo.TEXT)])
+    if (flag_created_at):
+        print('Add created_at index:{}'.format(board))
+        board_col.create_index([('created_at', pymongo.DESCENDING)])
 
 print('Done')
