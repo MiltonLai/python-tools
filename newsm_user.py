@@ -39,7 +39,8 @@ def update_user(name):
                     else:
                         # Compare with the latest snapshot
                         snapshot = snapshots[0]
-                        flag_changed = compare_user(snapshot, user)
+                        if compare_snapshot(snapshot, user) or compare_user(dummy, user):
+                            flag_changed = True
 
                 if flag_changed:
                     dummy['_id'] = dummy['_id'] + '.' + str(dummy['updated_at'])
@@ -62,6 +63,15 @@ def compare_user(old_user, new_user):
     if new_user['posts'] - old_user['posts'] > 20:
         return True
     if old_user['ip'] != new_user['ip']:
+        return True
+
+    return False
+
+
+def compare_snapshot(snapshot, new_user):
+    if new_user['logins'] - snapshot['logins'] > 50:
+        return True
+    if new_user['posts'] - snapshot['posts'] > 20:
         return True
 
     return False
