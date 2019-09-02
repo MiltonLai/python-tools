@@ -1,31 +1,47 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
+import pymongo
 import re
 import time
 
 import config
 import newsm_common
 
+
 def update_user(name):
-    if (name == 'deliver'):
+    if name == 'deliver':
         return
 
     dummy = config.tb_user.find_one({'_id': name})
-    if (dummy is None):
+    if dummy is None:
         user = fetch_user(name)
-        if (not user is None):
+        if not user is None:
             config.tb_user.save(user)
     else:
         # if user has been updated within 24 hours, skip
-        if (int(time.time()) - dummy['updated_at'] < 3600 * 24):
-            #print('Skip {}'.format(name))
+        if int(time.time()) - dummy['updated_at'] < 3600 * 24:
+            # print('Skip {}'.format(name))
             return
         else:
             user = fetch_user(name)
-            if (not user is None):
-                flag_changed = compare_user(dummy, user)
-                if (flag_changed):
+            if user is not None:
+                flag_changed = False
+                if user['nick'] == '用户不存在':
+                    # skip all Non-exists users
+                    flag_changed = False
+                else:
+                    # fetch the latest snapshot
+                    snapshots = config.tb_user_snapshot.find({'_id': {'$regex': '^' + name.lower() + '\.\d+'}}).sort([('_id', pymongo.DESCENDING)]).limit(5)
+                    if snapshots.count() == 0:
+                        # Save a snapshot if there is none
+                        flag_changed = True
+                    else:
+                        # Compare with the latest snapshot
+                        snapshot = snapshots[0]
+                        flag_changed = compare_user(snapshot, user)
+
+                if flag_changed:
                     dummy['_id'] = dummy['_id'] + '.' + str(dummy['updated_at'])
                     del dummy['next_update']
                     config.tb_user_snapshot.save(dummy)
@@ -37,28 +53,30 @@ def update_user(name):
             else:
                 print("None user")
 
+
 def compare_user(old_user, new_user):
-    flag_changed = False
-    if (old_user['name'] != new_user['name']):
-        flag_changed = True
-    if (old_user['nick'] != new_user['nick']):
-        flag_changed = True
-    if (new_user['posts'] - old_user['posts'] > 20):
-        flag_changed = True
-    if (old_user['ip'] != new_user['ip']):
-        flag_changed = True
-    return flag_changed
+    if old_user['name'] != new_user['name']:
+        return True
+    if old_user['nick'] != new_user['nick']:
+        return True
+    if new_user['posts'] - old_user['posts'] > 20:
+        return True
+    if old_user['ip'] != new_user['ip']:
+        return True
+
+    return False
+
 
 def fetch_user(name):
-    url = config.base_url +'/bbsqry.php?userid=' + name
+    url = config.base_url + '/bbsqry.php?userid=' + name
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
-    #print(html)
+    # print(html)
     if html is None:
-        print('URL request failed: '+ url)
+        print('URL request failed: ' + url)
         return None
     '''<tr><td>该用户不存在</td></tr>'''
     result = re.compile('<tr><td>该用户不存在</td></tr>').search(html)
-    if (not result is None):
+    if result is not None:
         user = {
             '_id': name.lower(),
             'name': name,
@@ -85,7 +103,7 @@ def fetch_user(name):
         print('Not matched(2)')
         print(result.group())
         return None
-    #print(result2.group())
+    # print(result2.group())
     user = {
         '_id': name.lower(),
         'name': name,
@@ -102,8 +120,8 @@ def fetch_user(name):
     }
 
     result3 = re.compile('\'dp1\'\);\s+prints\(\'(.*)\'\);\/\/-->').search(html)
-    #print(result3.group())
-    if (not result3 is None):
+    # print(result3.group())
+    if result3 is not None:
         user['signature'] = result3.group(1).strip()
         user['signature'] = re.sub(r'\\n', '\n', user['signature'])
         user['signature'] = re.sub(r'\\r\[[;\d]{0,12}m', '', user['signature'])
@@ -113,4 +131,3 @@ def fetch_user(name):
         user['signature'] = None
 
     return user
-
