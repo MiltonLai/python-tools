@@ -108,7 +108,7 @@ def fetch_user(name):
         print('    Not matched: {}'.format(html))
         return None
     # print(result.group(1))
-    result2 = re.compile('[^(]+\(([\s\S]*)\) 共上站 (\d+) 次，发表过 (\d+) 篇文章\s+上次在\s+\[(.*)\] 从 \[(.*)\] 到本站一游。(?:积分: \[\d+\])?\s+离线时间\s*\[(.*)\] 信箱: \[(.*)\] 生命力: \[(-?\d+)\] 身份: \[(.*)\]。').search(result.group(1))
+    result2 = re.compile('([^(]+)\(([\s\S]*)\) 共上站 (\d+) 次，发表过 (\d+) 篇文章\s+上次在\s+\[(.*)\] 从 \[(.*)\] 到本站一游。(?:积分: \[\d+\])?\s+离线时间\s*\[(.*)\] 信箱: \[(.*)\] 生命力: \[(-?\d+)\] 身份: \[(.*)\]。').search(result.group(1))
     if result2 is None:
         print('Not matched(2)')
         print(result.group())
@@ -116,15 +116,15 @@ def fetch_user(name):
     # print(result2.group())
     user = {
         '_id': name.lower(),
-        'name': name,
-        'nick': result2.group(1).strip(),
-        'logins': int(result2.group(2)),
-        'posts': int(result2.group(3)),
-        'last_login': result2.group(4),
-        'ip': result2.group(5),
-        'last_active': result2.group(6),
-        'life': int(result2.group(8)),
-        'title': result2.group(9),
+        'name': result2.group(1).strip(),
+        'nick': result2.group(2).strip(),
+        'logins': int(result2.group(3)),
+        'posts': int(result2.group(4)),
+        'last_login': result2.group(5),
+        'ip': result2.group(6),
+        'last_active': result2.group(7),
+        'life': int(result2.group(9)),
+        'title': result2.group(10),
         'updated_at': int(time.time()),
         'next_update': int(time.time()) + 3600 * 72
     }
