@@ -21,7 +21,7 @@ def fetch_new_articles(board):
     if result is None:
         print('Not matched')
         return
-    #print(result.group())
+    # print(result.group())
     pages = int(result.group(5))
     boardId = int(result.group(1))
 
@@ -34,9 +34,9 @@ def fetch_new_articles(board):
         articles = fetch_articles_list(board['name'], boardId, page)
         for article in articles:
             timeArray = time.localtime(article['created_at'])
-            #print(time.strftime("%Y-%m-%d %H:%M:%S", timeArray) + ': ' + str(article['_id']) + ',' + article['title'])
+            # print(time.strftime("%Y-%m-%d %H:%M:%S", timeArray) + ': ' + str(article['_id']) + ',' + article['title'])
             dummy = tb_article.find_one({'_id': article['_id']})
-            if (dummy is None):
+            if dummy is None:
                 # Fetch the rest profiles for article
                 fetch_article(article)
                 tb_article.save(article)
@@ -117,11 +117,11 @@ def fetch_article(article):
     article['updated_at'] = int(time.time())
     article['attachments'] = []
     # If there are attachments
-    if (not result.group(3) is None):
+    if not result.group(3) is None:
         # group 3 only match one occurence, so here apply the matching on group 1 again
         result = re.compile('attach\(\'([^\']+)\',\s*(\d+),\s*(\d+)\);').findall(result.group(1))
-        if (len(result) > 0):
-            #print(result)
+        if len(result) > 0:
+            # print(result)
             for line in result:
                 attachment = {
                     'name':line[0].strip(),
@@ -129,6 +129,7 @@ def fetch_article(article):
                     'id':int(line[2])
                 }
                 article['attachments'].append(attachment)
+
 
 def extract_ip_from_article(content):
     if (content is None) or (len(content) == 0):

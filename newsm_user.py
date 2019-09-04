@@ -13,7 +13,7 @@ def update_user(name):
     if name == 'deliver':
         return
 
-    dummy = config.tb_user.find_one({'_id': name})
+    dummy = config.tb_user.find_one({'_id': name.lower()})
     if dummy is None:
         user = fetch_user(name)
         if not user is None:
