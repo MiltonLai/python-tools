@@ -17,6 +17,7 @@ def update_user(name):
     if dummy is None:
         user = fetch_user(name)
         if not user is None:
+            print('    New:      {}, {}, {}, {}'.format(user['name'], user['nick'], str(user['logins']), str(user['posts'])))
             config.tb_user.save(user)
     else:
         # if user has been updated within 24 hours, skip

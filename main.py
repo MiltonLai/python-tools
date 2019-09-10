@@ -56,7 +56,7 @@ selected_boards = []
 for board in results:
     time_elapsed = now - board['updated_at']
     #print('{} {}'.format(board, time_elapsed))
-    if (board['t1'] < 10 and time_elapsed < 3600 * 4):
+    if (board['t1'] < 20 and time_elapsed < 3600 * 4):
         continue
     if (board['t2'] == 0 and time_elapsed < 3600 * 16):
         continue
@@ -72,7 +72,7 @@ for board in selected_boards:
 
 print('[*] Update users')
 # db.getCollection('user').find({next_update :{'$lt': 1563696245}}).sort({next_update:1}).limit(20)
-results = config.tb_user.find({'next_update':{'$lt':now}}).sort([('next_update', pymongo.ASCENDING)]).limit(3000)
+results = config.tb_user.find({'next_update':{'$lt':now}}).sort([('next_update', pymongo.ASCENDING)]).limit(1000)
 selected_users = []
 for user in results:
     selected_users.append(user)
