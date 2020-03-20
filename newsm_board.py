@@ -32,6 +32,7 @@ def fetch_and_update_boards():
     all_boards = browseSection(0)
     print('Finished fetching all boards. Total:{}. May contain duplicate ids.'.format(len(all_boards)))
     flag_new = False
+    flag_update = False
     for board in all_boards:
         del board['section_id']
         del board['parent_id']
@@ -45,8 +46,17 @@ def fetch_and_update_boards():
             board['updated_at'] = int(time.time())
             config.tb_board.save(board)
             print('New board found and saved. Board:{}, {}, {}'.format(board['_id'], board['name'], board['name2']))
+        elif (dummy['name'] != board['name']):
+            flag_update = True
+            old_name = dummy['name']
+            dummy['name'] = board['name']
+            config.tb_board.save(dummy)
+            print('Board name updated. Board:{}, {}, old name:{}'.format(board['_id'], board['name'], old_name))
+
     if (not flag_new):
         print('No new boards found.')
+    if (not flag_update):
+        print('No board updates found.')
 
 
 def browseSection(id):
