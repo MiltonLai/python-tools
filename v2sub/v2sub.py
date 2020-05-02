@@ -51,9 +51,10 @@ if configs is None or len(configs) == 0:
     with open(conf_path, 'w') as conf_file:
         json.dump(configs, conf_file, indent=2)
 
-print('Subscribed URL: {}, local port:{}\n'.format(configs['subscribe_url'], configs['local_port']))
-print('Reading server nodes...\n')
+print('Subscribed URL: {}\nLocal port:{}\n'.format(configs['subscribe_url'], configs['local_port']))
+print('Reading server nodes... ', end='')
 node_strings = base64.b64decode(requests.get(configs['subscribe_url']).content).splitlines()
+print('Done')
 nodes = {}
 for i in range(len(node_strings)):
     node = json.loads(base64.b64decode(bytes.decode(node_strings[i]).replace('vmess://', '')))
@@ -73,26 +74,28 @@ v2ray_config = {
         "access": "/var/log/v2ray/access.log",
         "error": "/var/log/v2ray/error.log"
     },
-    "inbound": {
-        "tag": "proxy",
+    "inbounds": [{
+        # Tag of the inbound proxy. May be used for routing.
+        "tag": "socks-inbound",
+        # Port to listen on. You may need root access if the value is less than 1024.
         "port": configs['local_port'],
+        # IP address to listen on. Change to "0.0.0.0" to listen on all network interfaces.
         "listen": "127.0.0.1",
+        # Protocol name of inbound proxy.
         "protocol": "socks",
-        "sniffing": {
-            "enabled": True,
-            "destOverride": [
-                "http",
-                "tls"
-            ]
-        },
+        # Settings of the protocol. Varies based on protocol.
         "settings": {
             "auth": "noauth",
             "udp": True,
-            "ip": None,
-            "address": None,
-            "clients": None
+            "ip": "127.0.0.1"
+        },
+        # Enable sniffing on TCP connection.
+        "sniffing": {
+            "enabled": True,
+            # Target domain will be overriden to the one carried by the connection, if the connection is HTTP or HTTPS.
+            "destOverride": ["http", "tls"]
         }
-    },
+    }],
     "outbounds": [
         {
             "tag": "proxy",
@@ -168,14 +171,35 @@ v2ray_config = {
         "domainStrategy": "IPIfNonMatch",
         "rules": [
             {
+                # Bypass access to private IPs.
                 "type": "field",
-                "port": None,
-                "inboundTag": [
-                    "api"
+                "ip": [
+                    "0.0.0.0/8",
+                    "10.0.0.0/8",
+                    "127.0.0.0/8",
+                    "172.16.0.0/12",
+                    "192.168.0.0/16",
+                    "::1/128",
+                    "fc00::/7",
+                    "fe80::/10"
                 ],
-                "outboundTag": "api",
-                "ip": None,
-                "domain": None
+                "outboundTag": "direct"
+            },
+            {
+                # Bypass domestic domains
+                "type": "field",
+                "domain": [
+                    "domain:baidu.com",
+                    "domain:bdstatic.com",
+                    "domain:baidustatic.com",
+                    "domain:qq.com",
+                    "domain:sogou.com",
+                    "domain:sogoucdn.com",
+                    "domain:newsmth.net",
+                    "domain:cnblogs.com",
+                    "domain:right.com.cn"
+                ],
+                "outboundTag": "direct"
             }
         ]
     }
@@ -186,13 +210,15 @@ with open(v2ray_conf_path, 'w') as v2ray_conf_file:
     json.dump(v2ray_config, v2ray_conf_file, indent=2)
     print('Config file generated: {}'.format(v2ray_conf_path))
 
-if re.search('[yesYES]', input('Do you want to apply the change and restart service？[y/N]')):
+if euid == 0 and re.search('[yesYES]', input('\nDo you want to apply the change and restart the service？[y/N]')):
     if os.path.exists(v2ray_service_config_path):
-        print('Backup existing config file {}'.format(v2ray_service_config_path))
+        print('Backup existing config file {} ... '.format(v2ray_service_config_path), end='')
         os.popen('cp {} {}'.format(v2ray_service_config_path, os.path.join(this_path, 'config.json.bak')))
-    print('Apply new config file')
+        print('Done')
+    print('Applying new config file... ', end='')
     os.popen('cp {} {}'.format(v2ray_conf_path, v2ray_service_config_path))
-    print('Restart v2ray service')
+    print('Done')
+    print('Restarting v2ray service... ', end='')
     subprocess.call('systemctl restart v2ray.service', shell=True)
 
 print('Done')
