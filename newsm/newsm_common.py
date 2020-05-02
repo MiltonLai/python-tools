@@ -3,7 +3,7 @@
 
 import re
 import requests
-import config
+from newsm import config
 
 session = requests.session()
 

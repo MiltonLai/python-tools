@@ -5,8 +5,8 @@ import re
 import time
 import requests
 
-import config
-import newsm_common
+from newsm import config, newsm_common
+
 
 def update_post_counts(board_id):
     board = config.tb_board.find_one({'_id': board_id})

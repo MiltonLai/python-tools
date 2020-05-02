@@ -5,8 +5,7 @@ import re
 import time
 import pymongo
 
-import config
-import newsm_common
+from newsm import config, newsm_common
 
 now = int(time.time())
 

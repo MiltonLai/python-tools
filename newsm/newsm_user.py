@@ -5,8 +5,7 @@ import pymongo
 import re
 import time
 
-import config
-import newsm_common
+from newsm import config, newsm_common
 
 
 def update_user(name):

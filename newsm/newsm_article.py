@@ -4,9 +4,8 @@
 import re
 import time
 
-import config
-import newsm_common
-import newsm_user
+from newsm import config, newsm_common, newsm_user
+
 
 def fetch_new_articles(board):
     url = config.base_url + '/bbsdoc.php?board=' + board['name']
