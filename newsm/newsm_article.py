@@ -4,7 +4,7 @@
 import re
 import time
 
-from newsm import config, newsm_common, newsm_user
+import config, newsm_common, newsm_user
 
 
 def fetch_new_articles(board):

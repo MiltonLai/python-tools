@@ -23,3 +23,7 @@ tb_user = mongo_db['user']
 tb_user_snapshot = mongo_db['user_snapshot']
 
 base_url = cfg['newsm']['base_url']
+if ('proxies' in cfg):
+    proxies = cfg['proxies']
+else:
+    proxies = None

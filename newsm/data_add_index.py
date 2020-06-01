@@ -4,7 +4,7 @@
 import time
 import pymongo
 
-from newsm import config
+import config
 
 now = int(time.time())
 

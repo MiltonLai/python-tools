@@ -3,9 +3,8 @@
 
 import re
 import time
-import requests
 
-from newsm import config, newsm_common
+import config, newsm_common
 
 
 def update_post_counts(board_id):
@@ -112,9 +111,9 @@ def browseSection(id):
 
 
 def browseBoard(name, id, sectionId):
-    url = config.base_url + '/bbsdoc.php?board=' + name;
-    page = requests.get(url)
-    content = page.text.encode('iso-8859-1').decode('gbk').replace(u'\u3000', u'')
+    url = config.base_url + '/bbsdoc.php?board=' + name
+    content = newsm_common.request_get(url, 'GB18030', 20, 10)
+    content = content.replace(u'\u3000', u'')
     #print(content)
     boards = []
     result = re.compile(r'o\.o\([^\)]*\)').findall(content)

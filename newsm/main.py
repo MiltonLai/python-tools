@@ -3,7 +3,7 @@
 
 import time
 import pymongo
-from newsm import config, newsm_common, newsm_article, newsm_board, newsm_user
+import config, newsm_common, newsm_article, newsm_board, newsm_user
 
 now = int(time.time())
 print('[*] Setup session')

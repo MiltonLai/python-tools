@@ -3,7 +3,8 @@
 
 import re
 import requests
-from newsm import config
+import time
+import config
 
 session = requests.session()
 
@@ -15,10 +16,11 @@ def login(user_name, user_pass):
     })
     #print(session.headers)
     #print(session.cookies.get_dict())
+    #res = session.get(config.base_url + '/frames.php', proxies=config.proxies)
 
     post_data = {'id':user_name,'passwd': user_pass}
-    rs = session.post(config.base_url + '/bbslogin1203.php', post_data)
-    #print(session.cookies.get_dict())
+    rs = session.post(config.base_url + '/bbslogin1203.php', post_data, proxies=config.proxies)
+    print(session.cookies.get_dict())
 
 def logout():
     session.headers.update({
@@ -27,7 +29,7 @@ def logout():
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     })
     #print(session.cookies.get_dict())
-    res = session.get(config.base_url + '/bbslogout.php')
+    res = session.get(config.base_url + '/bbslogout.php', proxies=config.proxies)
     #print(session.cookies.get_dict())
 
 def request_get(url, encoding='UTF-8', tout=20, retries=10):
@@ -37,9 +39,11 @@ def request_get(url, encoding='UTF-8', tout=20, retries=10):
         if (count > retries):
             print('Exceed retry limit')
             return None
+        time.sleep(1)
         try:
-            response = session.get(url, timeout=tout)
+            response = session.get(url, timeout=tout, proxies=config.proxies)
             response.encoding = encoding
+            #print(response.text)
             return response.text
         except requests.ReadTimeout:
             print('ReadTimeout')
