@@ -11,25 +11,34 @@ session = requests.session()
 def login(user_name, user_pass):
     session.headers.update({
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
-        'Referer': config.base_url + '/indexpages/default/',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        'Referer': config.base_url + '/nForum/',
+        'Accept': 'application/json, text/javascript, */*; q=0.01'
     })
     #print(session.headers)
     #print(session.cookies.get_dict())
-    #res = session.get(config.base_url + '/frames.php', proxies=config.proxies)
+    res = session.get(config.base_url + '/nForum/', proxies=config.proxies)
+    #print(session.cookies.get_dict())
 
     post_data = {'id':user_name,'passwd': user_pass}
-    rs = session.post(config.base_url + '/bbslogin1203.php', post_data, proxies=config.proxies)
+    res = session.post(
+        config.base_url + '/nForum/user/ajax_login.json',
+        post_data,
+        headers={'X-Requested-With': 'XMLHttpRequest'},
+        proxies=config.proxies)
+    print(res.text)
     print(session.cookies.get_dict())
 
 def logout():
     session.headers.update({
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
-        'Referer': config.base_url + '/bbsguestleft.html',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        'Referer': config.base_url + '/nForum/',
+        'Accept': 'application/json, text/javascript, */*; q=0.01'
     })
     #print(session.cookies.get_dict())
-    res = session.get(config.base_url + '/bbslogout.php', proxies=config.proxies)
+    res = session.get(
+        config.base_url + '/nForum/user/ajax_logout.json',
+        headers={'X-Requested-With': 'XMLHttpRequest'},
+        proxies=config.proxies)
     #print(session.cookies.get_dict())
 
 def request_get(url, encoding='UTF-8', tout=20, retries=10):
