@@ -7,7 +7,7 @@ import time
 import config, newsm_common, newsm_user
 
 
-def fetch_new_articles(board):
+def fetch_new_articles(board, start_page=0):
     url = config.base_url + '/bbsdoc.php?board=' + board['name']
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     if html is None:
@@ -28,21 +28,28 @@ def fetch_new_articles(board):
     skipped_count = 0
     new_articles = 0
     print('=== {}, {}'.format(boardId, board['name']))
+
+    if start_page > 0 and start_page < pages:
+        pages = start_page
     for page in range(pages, 1, -1):
-        print('    {}, {}, P{}'.format(boardId, board['name'], page))
+        print('    {}: {}, {}, P{}'.format(
+            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), boardId, board['name'], page))
         articles = fetch_articles_list(board['name'], boardId, page)
         for article in articles:
-            timeArray = time.localtime(article['created_at'])
+            # timeArray = time.localtime(article['created_at'])
             # print(time.strftime("%Y-%m-%d %H:%M:%S", timeArray) + ': ' + str(article['_id']) + ',' + article['title'])
             dummy = tb_article.find_one({'_id': article['_id']})
-            if dummy is None:
+            if dummy is None or dummy['content'] == '':
                 # Fetch the rest profiles for article
                 fetch_article(article)
-                tb_article.save(article)
-                new_articles += 1
-                # Add or update user
-                if ('author' in article) and (not article['author'] == ''):
-                    newsm_user.update_user(article['author'])
+                if article['content'] != '':
+                    tb_article.save(article)
+                    new_articles += 1
+                    # Add or update user
+                    if ('author' in article) and (not article['author'] == ''):
+                        newsm_user.update_user(article['author'])
+                else:
+                    skipped_count += 1
             else:
                 skipped_count += 1
                 #print('skip: ' + str(article['_id']))

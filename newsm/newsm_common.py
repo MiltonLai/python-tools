@@ -48,7 +48,7 @@ def request_get(url, encoding='UTF-8', tout=20, retries=10):
         if (count > retries):
             print('Exceed retry limit')
             return None
-        time.sleep(1)
+        time.sleep(0.2)
         try:
             response = session.get(url, timeout=tout, proxies=config.proxies)
             response.encoding = encoding
