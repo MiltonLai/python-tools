@@ -10,6 +10,7 @@ from config import logger
 
 
 def update_user(name):
+    name = name.strip()
     if name == 'deliver':
         return
 
@@ -22,7 +23,7 @@ def update_user(name):
     else:
         # if user has been updated within 24 hours, skip
         if int(time.time()) - dummy['updated_at'] < 3600 * 24:
-            # print('Skip {}'.format(name))
+            logger.info('      Skip {}'.format(name))
             return
         else:
             user = fetch_user(name)
@@ -48,10 +49,10 @@ def update_user(name):
                     del dummy['next_update']
                     config.tb_user_snapshot.save(dummy)
                     config.tb_user.save(user)
-                    logger.info('    Changed:  {}, {}, {}, {}'.format(user['name'], user['nick'], str(user['logins']), str(user['posts'])))
+                    logger.info('      Changed:  {}, {}, {}, {}'.format(user['name'], user['nick'], str(user['logins']), str(user['posts'])))
                 else:
                     config.tb_user.save(user)
-                    logger.info('    Unchanged:{}, {}, {}, {}'.format(user['name'], user['nick'], str(user['logins']), str(user['posts'])))
+                    logger.info('      Unchanged:{}, {}, {}, {}'.format(user['name'], user['nick'], str(user['logins']), str(user['posts'])))
             else:
                 logger.info("None user")
 
@@ -79,6 +80,7 @@ def compare_snapshot(snapshot, new_user):
 
 
 def fetch_user(name):
+    name = name.strip()
     url = config.base_url + '/bbsqry.php?userid=' + name
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     # logger.info(html)
@@ -116,7 +118,7 @@ def fetch_user(name):
         return None
     # logger.info(result2.group())
     user = {
-        '_id': name.lower(),
+        '_id': result2.group(1).strip().lower(),
         'name': result2.group(1).strip(),
         'nick': result2.group(2).strip(),
         'logins': int(result2.group(3)),

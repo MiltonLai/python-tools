@@ -33,8 +33,7 @@ def fetch_new_articles(board, start_page=0):
     if start_page > 0 and start_page < pages:
         pages = start_page
     for page in range(pages, 1, -1):
-        logger.info('    {}: {}, {}, P{}'.format(
-            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), boardId, board['name'], page))
+        logger.info('    {}, {}, P{}'.format(boardId, board['name'], page))
         articles = fetch_articles_list(board['name'], boardId, page)
         for article in articles:
             # timeArray = time.localtime(article['created_at'])
@@ -55,7 +54,7 @@ def fetch_new_articles(board, start_page=0):
                 skipped_count += 1
                 #logger.debug('skip: ' + str(article['_id']))
 
-        if (skipped_count > 60):
+        if (skipped_count > 30):
             break
 
     logger.info('    New articles: {}'.format(new_articles))
@@ -65,7 +64,7 @@ def fetch_articles_list(boardName, boardId, page):
     #logger.debug(url)
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     if html is None:
-        print('URL request failed: ' + url)
+        logger.error('URL request failed: ' + url)
         return
     # logger.debug(html)
     # c.o(1,1,'loury','m ',985656622,'[公告]同意开设&quot;Python/Python语言&quot;看版 (转载) ',0,0,0);
@@ -95,15 +94,15 @@ def fetch_article(article):
     url = config.base_url + '/bbscon.php?bid=' + str(article['board_id']) + '&id=' + realId
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     if html is None:
-        print('    URL request failed: ' + url)
+        logger.error('    URL request failed: ' + url)
         return
-    # print(html)
-    # prints('发信人:  [FROM: 60.191.227.*]\r[m\n');o.h(0);o.t();
-    # prints('发信人:  [FROM: 60.191.227.*]\r[m\n');attach('test.zip', 4227, 2059);o.h(0);o.t();
+    # logger.info(html)
+    # logger.info('发信人:  [FROM: 60.191.227.*]\r[m\n');o.h(0);o.t();
+    # logger.info('发信人:  [FROM: 60.191.227.*]\r[m\n');attach('test.zip', 4227, 2059);o.h(0);o.t();
     result = re.compile(
         '(prints\(\'(.*)\'\);(attach\(\'([^\']+)\',\s*(\d+),\s*(\d+)\);){0,}o\.h\(0\);o\.t\(\);)').search(html)
     if result is None:
-        print('    Not matched: {}'.format(html))
+        logger.debug('    Not matched: {}'.format(html))
         article['content'] = ''
         article['updated_at'] = int(time.time())
         article['attachments'] = []
@@ -129,7 +128,7 @@ def fetch_article(article):
         # group 3 only match one occurence, so here apply the matching on group 1 again
         result = re.compile('attach\(\'([^\']+)\',\s*(\d+),\s*(\d+)\);').findall(result.group(1))
         if len(result) > 0:
-            # print(result)
+            # logger.info(result)
             for line in result:
                 attachment = {
                     'name':line[0].strip(),

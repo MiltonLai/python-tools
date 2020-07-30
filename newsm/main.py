@@ -66,12 +66,18 @@ if global_mode == 0:
     for board in results:
         time_elapsed = now - board['updated_at']
         # print('{} {}'.format(board, time_elapsed))
-        if (board['t1'] < 20 and time_elapsed < 3600 * 4):
+        if (board['t3'] == 0 and time_elapsed < 3600 * 128):
             continue
         if (board['t2'] == 0 and time_elapsed < 3600 * 16):
             continue
-        if (board['t3'] == 0 and time_elapsed < 3600 * 128):
+        # t1[160,) always; t1[80,160) every 30 min; t1[20,80) every 1 hour; t1[0,20) every 4 hours
+        if (board['t1'] < 20 and time_elapsed < 3600 * 4):
             continue
+        if (board['t1'] < 80 and time_elapsed < 3600):
+            continue
+        if (board['t1'] < 160 and time_elapsed < 1800):
+            continue
+
         selected_boards.append(board)
     logger.info('    Proceed articles updating. Total boards:{}'.format(len(selected_boards)))
     for board in selected_boards:
@@ -89,7 +95,7 @@ else:
 logger.info('[*] Update users')
 if global_mode == 0:
     # db.getCollection('user').find({next_update :{'$lt': 1563696245}}).sort({next_update:1}).limit(20)
-    results = config.tb_user.find({'next_update': {'$lt': now}}).sort([('next_update', pymongo.ASCENDING)]).limit(1000)
+    results = config.tb_user.find({'next_update': {'$lt': now}}).sort([('next_update', pymongo.ASCENDING)]).limit(300)
     selected_users = []
     for user in results:
         selected_users.append(user)
