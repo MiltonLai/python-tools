@@ -5,6 +5,7 @@ import re
 import requests
 import time
 import config
+from config import logger
 
 session = requests.session()
 
@@ -14,19 +15,19 @@ def login(user_name, user_pass):
         'Referer': config.base_url + '/nForum/',
         'Accept': 'application/json, text/javascript, */*; q=0.01'
     })
-    #print(session.headers)
-    #print(session.cookies.get_dict())
-    res = session.get(config.base_url + '/nForum/', proxies=config.proxies)
-    #print(session.cookies.get_dict())
-
+    logger.debug(session.headers)
+    logger.debug(session.cookies.get_dict())
+    response = session.get(config.base_url + '/nForum/', proxies=config.proxies)
+    response.encoding = 'UTF-8'
+    logger.debug(session.cookies.get_dict())
     post_data = {'id':user_name,'passwd': user_pass}
     res = session.post(
         config.base_url + '/nForum/user/ajax_login.json',
         post_data,
         headers={'X-Requested-With': 'XMLHttpRequest'},
         proxies=config.proxies)
-    print(res.text)
-    print(session.cookies.get_dict())
+    logger.info(res.text)
+    logger.info(session.cookies.get_dict())
 
 def logout():
     session.headers.update({
@@ -34,19 +35,19 @@ def logout():
         'Referer': config.base_url + '/nForum/',
         'Accept': 'application/json, text/javascript, */*; q=0.01'
     })
-    #print(session.cookies.get_dict())
+    #logger.info(session.cookies.get_dict())
     res = session.get(
         config.base_url + '/nForum/user/ajax_logout.json',
         headers={'X-Requested-With': 'XMLHttpRequest'},
         proxies=config.proxies)
-    #print(session.cookies.get_dict())
+    #logger.info(session.cookies.get_dict())
 
 def request_get(url, encoding='UTF-8', tout=20, retries=10):
     count = 0
     while True:
         count += 1
         if (count > retries):
-            print('Exceed retry limit')
+            logger.error('Exceed retry limit')
             return None
         time.sleep(0.2)
         try:
@@ -55,13 +56,13 @@ def request_get(url, encoding='UTF-8', tout=20, retries=10):
             #print(response.text)
             return response.text
         except requests.ReadTimeout:
-            print('ReadTimeout')
+            logger.error('ReadTimeout')
             continue
         except ConnectionError:
-            print('ConnectionError')
+            logger.error('ConnectionError')
             continue
         except requests.RequestException:
-            print('RequestException')
+            logger.error('RequestException')
             continue
 
 def remove_emoji(text):

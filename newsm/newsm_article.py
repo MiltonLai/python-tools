@@ -5,39 +5,40 @@ import re
 import time
 
 import config, newsm_common, newsm_user
+from config import logger
 
 
 def fetch_new_articles(board, start_page=0):
     url = config.base_url + '/bbsdoc.php?board=' + board['name']
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     if html is None:
-        print('    URL request failed: ' + url)
+        logger.error('    URL request failed: ' + url)
         return
-    # print(html)
+    # logger.debug(html)
 
     # docWriter('Python',284,96499,0,0,3218,96528,'/groups/comp.faq/Python',1,1);
     result = re.compile('docWriter\(\'' + board['name'] + '\',(\d+),(\d+),(\d+),(\d+),(\d+),(\d+),\'([^\']+)\',(\d+),(\d+)\)').search(html)
     if result is None:
-        print('Not matched')
+        logger.error('Not matched')
         return
-    # print(result.group())
+    # logger.debug(result.group())
     pages = int(result.group(5))
     boardId = int(result.group(1))
 
     tb_article = config.mongo_db['article_' + str(boardId)]
     skipped_count = 0
     new_articles = 0
-    print('=== {}, {}'.format(boardId, board['name']))
+    logger.info('=== {}, {}'.format(boardId, board['name']))
 
     if start_page > 0 and start_page < pages:
         pages = start_page
     for page in range(pages, 1, -1):
-        print('    {}: {}, {}, P{}'.format(
+        logger.info('    {}: {}, {}, P{}'.format(
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), boardId, board['name'], page))
         articles = fetch_articles_list(board['name'], boardId, page)
         for article in articles:
             # timeArray = time.localtime(article['created_at'])
-            # print(time.strftime("%Y-%m-%d %H:%M:%S", timeArray) + ': ' + str(article['_id']) + ',' + article['title'])
+            # logger.debug(time.strftime("%Y-%m-%d %H:%M:%S", timeArray) + ': ' + str(article['_id']) + ',' + article['title'])
             dummy = tb_article.find_one({'_id': article['_id']})
             if dummy is None or dummy['content'] == '':
                 # Fetch the rest profiles for article
@@ -52,20 +53,21 @@ def fetch_new_articles(board, start_page=0):
                     skipped_count += 1
             else:
                 skipped_count += 1
-                #print('skip: ' + str(article['_id']))
+                #logger.debug('skip: ' + str(article['_id']))
 
         if (skipped_count > 60):
             break
-    print('    New articles: {}'.format(new_articles))
+
+    logger.info('    New articles: {}'.format(new_articles))
 
 def fetch_articles_list(boardName, boardId, page):
     url = config.base_url + '/bbsdoc.php?board=' + boardName + '&ftype=0&page=' + str(page)
-    #print(url)
+    #logger.debug(url)
     html = newsm_common.request_get(url, 'GB18030', 20, 10)
     if html is None:
         print('URL request failed: ' + url)
         return
-    # print(html)
+    # logger.debug(html)
     # c.o(1,1,'loury','m ',985656622,'[公告]同意开设&quot;Python/Python语言&quot;看版 (转载) ',0,0,0);
     result = re.compile('c\.o\((\d+),(\d+),\'([^\']+)\',\'([^\']+)\',(\d+),\'([^\']+)\',(\d+),(\d+),(\d+)\)').findall(html)
 
@@ -139,7 +141,7 @@ def fetch_article(article):
 
 def extract_ip_from_article(content):
     if (content is None) or (len(content) == 0):
-        print('    Content is empty')
+        logger.info('    Content is empty')
         return None
     result = re.compile('\[FROM: ([\d\.\*]+)\](\\n)+$').search(content)
     if result is None:

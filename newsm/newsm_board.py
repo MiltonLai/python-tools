@@ -5,13 +5,14 @@ import re
 import time
 
 import config, newsm_common
+from config import logger
 
 
 def update_post_counts(board_id):
     board = config.tb_board.find_one({'_id': board_id})
     if (board is None):
-        print('Board is null: {}'.format(board_id))
-        exit()
+        logger.error('Board is null: {}'.format(board_id))
+        return
     now = int(time.time())
     if (('article_' + str(board_id)) in config.mongo_db.collection_names()):
         tb_article = config.mongo_db['article_' + str(board_id)]
@@ -29,7 +30,7 @@ def update_post_counts(board_id):
 
 def fetch_and_update_boards():
     all_boards = browseSection(0)
-    print('Finished fetching all boards. Total:{}. May contain duplicate ids.'.format(len(all_boards)))
+    logger.info('Finished fetching all boards. Total:{}. May contain duplicate ids.'.format(len(all_boards)))
     flag_new = False
     flag_update = False
     for board in all_boards:
@@ -44,25 +45,25 @@ def fetch_and_update_boards():
             board['t3'] = 1
             board['updated_at'] = int(time.time())
             config.tb_board.save(board)
-            print('New board found and saved. Board:{}, {}, {}'.format(board['_id'], board['name'], board['name2']))
+            logger.info('New board found and saved. Board:{}, {}, {}'.format(board['_id'], board['name'], board['name2']))
         elif (dummy['name'] != board['name']):
             flag_update = True
             old_name = dummy['name']
             dummy['name'] = board['name']
             config.tb_board.save(dummy)
-            print('Board name updated. Board:{}, {}, old name:{}'.format(board['_id'], board['name'], old_name))
+            logger.info('Board name updated. Board:{}, {}, old name:{}'.format(board['_id'], board['name'], old_name))
 
     if (not flag_new):
-        print('No new boards found.')
+        logger.info('No new boards found.')
     if (not flag_update):
-        print('No board updates found.')
+        logger.info('No board updates found.')
 
 
 def browseSection(id):
     url = config.base_url + '/bbsfav.php?select=' + str(id) + '&x'
     content = newsm_common.request_get(url, 'GB18030', 20, 10)
     content = content.replace(u'\u3000', u'')
-    #print(content)
+    #logger.debug(content)
     boards = []
     # list all sections
     result = re.compile(r'o\.f\([^\)]*\)').findall(content)
@@ -77,7 +78,7 @@ def browseSection(id):
             section['desc'] = match.group(3)
             section['rank'] = int(match.group(4))
             #all_sections.append(section)
-            #print(section)
+            #logger.debug(section)
             sub_boards = browseSection(section['_id'])
             boards.extend(sub_boards)
 
@@ -85,10 +86,10 @@ def browseSection(id):
     # o.o(false,1,1161,23473,'[清华]','CECM.THU','清华土木建管','ghostzb',21767,0,1);
     # 版面or目录, group, group2, (不知道), 分区名, 版面名, 版面中文名, 版主(可能为空), 帖子数, (不知道), 在线数
     result = re.compile(r'o\.o\([^\)]*\)').findall(content)
-    #print(result)
+    #logger.debug(result)
     for line in result:
         match = re.match(r'o\.o\((true|false),(\d+),(\d+),(\d+),\'\[([^\]]*)\]\',\s*\'([^\']+)\',\s*\'([^\']+)\',\s*\'([^\']*)\',(\d+),(\d+),(\d+)\)', line)
-        #print(match.group())
+        #logger.debug(match.group())
         board = {}
         board['_id'] = int(match.group(3))
         board['name'] = match.group(6)
@@ -103,7 +104,7 @@ def browseSection(id):
         board['section_id'] = id
         board['parent_id'] = 0
         boards.append(board)
-        # print(board)
+        # logger.debug(board)
         if board['is_folder'] == 'true':
             sub_boards = browseBoard(board['name'], board['_id'], id)
             boards.extend(sub_boards)
@@ -114,15 +115,15 @@ def browseBoard(name, id, sectionId):
     url = config.base_url + '/bbsdoc.php?board=' + name
     content = newsm_common.request_get(url, 'GB18030', 20, 10)
     content = content.replace(u'\u3000', u'')
-    #print(content)
+    #logger.debug(content)
     boards = []
     result = re.compile(r'o\.o\([^\)]*\)').findall(content)
-    #print(result)
+    #logger.debug(result)
     for line in result:
         match = re.match(
             r'o\.o\((true|false),(\d+),(\d+),(\d+),\'\[([^\]]*)\]\',\s*\'([^\']+)\',\s*\'([^\']+)\',\s*\'([^\']*)\',(\d+),(\d+),(\d+)\)',
             line)
-        # print(match.group())
+        # logger.debug(match.group())
         board = {}
         board['_id'] = int(match.group(3))
         board['name'] = match.group(6)
@@ -137,7 +138,7 @@ def browseBoard(name, id, sectionId):
         board['section_id'] = sectionId
         board['parent_id'] = id
         boards.append(board)
-        # print(board)
+        # logger.debug(board)
         if board['is_folder'] == 'true':
             sub_boards = browseBoard(board['name'], board['_id'], sectionId)
             boards.extend(sub_boards)
